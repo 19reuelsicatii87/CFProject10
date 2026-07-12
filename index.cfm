@@ -61,6 +61,7 @@
             <h2>Welcome to my simple page</h2>
             <div>
                 <p style="margin: 0;">This is the main content area.</p>
+                <p style="margin: 0;">Docker Build</p>
                 <p style="margin: 0;">Version 26.6.29 - 2056</p>
                 <p style="margin: 0;">Deployment - ASG - In Place - Blue/Green</p>
             </div>

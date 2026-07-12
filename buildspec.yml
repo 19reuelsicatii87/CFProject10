@@ -2,80 +2,30 @@ version: 0.2
 
 env:
   variables:
-    CF_HOME: "/opt/coldfusion2025"
-    CF_WEBROOT: "/opt/coldfusion2025/cfusion/wwwroot"
-    CF_BIN: "/opt/coldfusion2025/cfusion/bin"
-    CODEDEPLOY_STAGING: "/opt/codedeploy/cf-app"
-    COLDBOX_APP_DIR: "."
-    DEPLOY_BUNDLE_DIR: "codedeploy-bundle"
+    # 1. Your correct ECR repository URI
+    REPOSITORY_URI: "113726398464.dkr.ecr.ap-southeast-1.amazonaws.com/staging/cf2025-webapp"
+    
+    # 2. Your exact container name matching your ECS Task Definition
+    CONTAINER_NAME: "cf2025-webapp-container"
 
 phases:
-  install:
-    commands:
-      - echo "=== Install phase ==="
-      - printf '%s\n' '[CommandBox]' 'name=CommandBox' 'baseurl=https://downloads.ortussolutions.com/RPMS/noarch' 'enabled=1' 'gpgcheck=0' | sudo tee /etc/yum.repos.d/commandbox.repo >/dev/null
-      - sudo dnf install -y commandbox rsync
-      - box version
-
   pre_build:
     commands:
-      - echo "=== Pre-build ==="
-      - test -f appspec.yml
-      - test -f index.cfm
-      - test -f scripts/before-install.sh
-      - test -f scripts/deploy-release.sh
-      - test -f scripts/restart-coldfusion.sh
-      - box install --production
-
+      - echo "Logging into Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
   build:
     commands:
-      - echo "=== Build ==="
-      - rm -rf "${DEPLOY_BUNDLE_DIR}"
-      - mkdir -p "${DEPLOY_BUNDLE_DIR}/scripts"
-      - |
-        rsync -a \
-          --exclude '.git/' \
-          --exclude '.gitignore' \
-          --exclude '.gitattributes' \
-          --exclude 'tests/' \
-          --exclude 'lib/testbox/' \
-          --exclude 'lib/modules/route-visualizer/' \
-          --exclude '.engine/' \
-          --exclude '.env' \
-          --exclude '.env.example' \
-          --exclude 'runtime/logs/' \
-          --exclude 'app/logs/' \
-          --exclude 'build/' \
-          --exclude 'build/.db/' \
-          --exclude '.tmp/' \
-          --exclude '.devcontainer/' \
-          --exclude 'docker/' \
-          --exclude 'public/includes/build/' \
-          --exclude '.vscode/' \
-          --exclude "${DEPLOY_BUNDLE_DIR}/" \
-          --exclude 'appspec.yml' \
-          --exclude 'index.cfm' \
-          --exclude 'scripts/' \
-          ./ "${DEPLOY_BUNDLE_DIR}/"
-      - cp appspec.yml "${DEPLOY_BUNDLE_DIR}/appspec.yml"
-      - cp index.cfm "${DEPLOY_BUNDLE_DIR}/index.cfm"
-      - cp scripts/before-install.sh "${DEPLOY_BUNDLE_DIR}/scripts/before-install.sh"
-      - cp scripts/deploy-release.sh "${DEPLOY_BUNDLE_DIR}/scripts/deploy-release.sh"
-      - cp scripts/restart-coldfusion.sh "${DEPLOY_BUNDLE_DIR}/scripts/restart-coldfusion.sh"
-      - chmod +x "${DEPLOY_BUNDLE_DIR}/scripts/before-install.sh"
-      - chmod +x "${DEPLOY_BUNDLE_DIR}/scripts/deploy-release.sh"
-      - chmod +x "${DEPLOY_BUNDLE_DIR}/scripts/restart-coldfusion.sh"
-      - test -f "${DEPLOY_BUNDLE_DIR}/appspec.yml"
-      - test -f "${DEPLOY_BUNDLE_DIR}/index.cfm"
-      - test -f "${DEPLOY_BUNDLE_DIR}/scripts/before-install.sh"
-      - test -f "${DEPLOY_BUNDLE_DIR}/scripts/deploy-release.sh"
-      - test -f "${DEPLOY_BUNDLE_DIR}/scripts/restart-coldfusion.sh"
-
+      - echo "Building the Docker image..."
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
   post_build:
     commands:
-      - echo "=== Post-build — artifact ready ==="
+      - echo "Pushing the Docker image to ECR..."
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo "Writing image definitions file for ECS..."
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION" > imagedefinitions.json
 
 artifacts:
-  base-directory: codedeploy-bundle
   files:
-    - '**/*'
+    - imagedefinitions.json

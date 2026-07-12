@@ -1,0 +1,56 @@
+version: 0.2
+
+phases:
+  install:
+    commands:    
+      # Installing JQ CLI for JSON processing
+      - yum install -y jq
+
+  build:
+    commands:
+      
+      # Fetch Security Crumb
+      - echo "Fetch Security Crumb"
+      - CRUMB=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "$JENKINS_URL/crumbIssuer/api/json" | jq -r '.crumb')
+      - echo "Security Crumb:" + "$CRUMB"
+
+      # Trigger Build and Capture the Queue URL
+      - echo "Trigger Build and Capture the Queue URL"
+      - QUEUE_URL=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" -X POST -i "$JENKINS_URL/job/$JENKINS_JOB/build?token=$JENKINS_TRIGGER_TOKEN" | grep -i "^location:" | awk '{print $2}' | tr -d '\r')
+      - echo "QUEUE_URL:" + "$QUEUE_URL"
+
+      # Wait for the job to move from Queue to an actual Build Number
+      - echo "Wait for the job to move from Queue to an actual Build Number"
+      - |
+        BUILD_URL=""
+        while [ -z "$BUILD_URL" ] || [ "$BUILD_URL" = "null" ]; do
+          sleep 5
+          BUILD_URL=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${QUEUE_URL}api/json" | jq -r '.executable.url')
+        done
+      - echo "BUILD_URL:" +"$BUILD_URL"
+
+      # FIX: Replace localhost with your actual accessible domain
+      - FINAL_URL=$(echo $BUILD_URL | sed 's|http://localhost:8080|https://qa-jenkins.semify.com|g')
+      - echo "FINAL_URL:" + "$FINAL_URL"
+
+      # Poll the Build URL for completion
+      - echo "Poll the Build URL for completion"
+      - |
+        STATUS="true"
+        while [ "$STATUS" = "true" ]; do
+          sleep 30
+          STATUS=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${FINAL_URL}api/json" | jq -r '.building')
+          echo "Still building: $STATUS"
+        done
+
+      # Final Result Check
+      - echo "Final Result Check"
+      - RESULT=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${FINAL_URL}api/json" | jq -r '.result')
+      - echo "RESULT:" + "$RESULT"
+      - |
+        if [ "$RESULT" != "SUCCESS" ]; then
+          echo "Jenkins Build Finished with result: $RESULT"
+          exit 1
+        else
+          echo "Jenkins Build Finished with result: $RESULT"
+        fi
