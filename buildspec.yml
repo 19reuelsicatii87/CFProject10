@@ -11,10 +11,18 @@ env:
 phases:
   pre_build:
     commands:
+      - echo "Check current directory..."
+      - pwd
+      - echo "List current directory..."
+      - ls -la
       - echo "Logging into Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
   build:
     commands:
+      - echo "Printing my active directory..."
+      - pwd
+      - echo "Listing all files in the active directory..."
+      - ls -la
       - echo "Building the Docker image..."
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
