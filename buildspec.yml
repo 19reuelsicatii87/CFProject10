@@ -6,7 +6,7 @@ env:
     REPOSITORY_URI: "113726398464.dkr.ecr.ap-southeast-1.amazonaws.com/staging/cf2025-webapp"
     
     # 2. Your exact container name matching your ECS Task Definition
-    CONTAINER_NAME: "cf2025-webapp-container"
+    CONTAINER_NAME: "ctnr-cf25-webApp"
 
 phases:
   pre_build:
@@ -31,9 +31,11 @@ phases:
       - echo "Pushing the Docker image to ECR..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - echo "Writing image definitions file for ECS..."
-      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION" > imagedefinitions.json
+      - echo "Writing imageDetail.json for CodeDeploy..."
+      - printf '{"ImageURI":"%s"}' "$REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION" > imageDetail.json
 
 artifacts:
   files:
-    - imagedefinitions.json
+    - imageDetail.json
+    - taskdef.json
+    - appspec.yml

@@ -1,0 +1,22 @@
+{
+    "family": "your-task-definition-family",
+    "containerDefinitions": [
+        {
+            "name": "ctnr-cf25-webApp",
+            "image": "<IMAGE1_NAME>",
+            "portMappings": [
+                {
+                    "containerPort": 8080,
+                    "hostPort": 8080
+                }
+            ],
+            "essential": true
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "256",
+    "memory": "512"
+}
