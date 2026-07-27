@@ -15,4 +15,4 @@ EXPOSE 8080
 
 # 6. Explicitly run the server in the foreground
 # The --console flag keeps the process attached to the container's output
-CMD ["box", "server", "start", "serverHomeDirectory=/serverHome", "port=8080", "--console"]
+CMD ["box", "server", "start", "serverHomeDirectory=/serverHome", "host=0.0.0.0", "port=8080", "openBrowser=false", "--console"]
