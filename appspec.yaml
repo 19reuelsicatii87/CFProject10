@@ -7,3 +7,4 @@ Resources:
         LoadBalancerInfo:
           ContainerName: "cf2025-webapp-container"
           ContainerPort: 8080
+        PlatformVersion: "LATEST"
