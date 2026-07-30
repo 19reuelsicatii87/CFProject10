@@ -6,7 +6,7 @@ env:
     REPOSITORY_URI: "113726398464.dkr.ecr.ap-southeast-1.amazonaws.com/staging/cf2025-webapp"
     
     # 2. Your exact container name matching your ECS Task Definition
-    CONTAINER_NAME: "ctnr-cf25-webApp"
+    CONTAINER_NAME: "cf2025-webapp-container"
 
 phases:
   pre_build:
