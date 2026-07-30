@@ -5,5 +5,5 @@ Resources:
       Properties:
         TaskDefinition: <TASK_DEFINITION>
         LoadBalancerInfo:
-          ContainerName: "ctnr-cf25-webApp"
+          ContainerName: "cf2025-webapp-container"
           ContainerPort: 8080
