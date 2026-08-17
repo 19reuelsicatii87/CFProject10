@@ -58,11 +58,11 @@
     <!-- Main Section -->
     <main>
         <div class="card">
-            <h2>Welcome to my simple page</h2>
+            <h2>Welcome to CF2025 simple page</h2>
             <div>
                 <p style="margin: 0;">This is the main content area.</p>
-                <p style="margin: 0;">Docker Build</p>
-                <p style="margin: 0;">Version 26.7.30 - 1107</p>
+                <p style="margin: 0;">Docker Build Demo</p>
+                <p style="margin: 0;">Version 26.8.17 - 1800</p>
                 <p style="margin: 0;">Deployment - ECS - Blue/Green</p>
             </div>
         </div>
@@ -81,7 +81,7 @@
                 return;
             }
 
-            message.innerText = "🎉🎉🎉 Deployment - ASG - In Place - Blue/Green 🎉🎉🎉";
+            message.innerText = "🎉🎉🎉 Deployment - ECS - Blue/Green 🎉🎉🎉";
         }
     </script>
 
